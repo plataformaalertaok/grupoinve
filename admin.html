@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>C-Panel | Grupo Briones</title>
+<link rel="icon" href="img/logo-white.png" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { 'branding-blue': '#0B2A4A', 'branding-sand': '#C9A876' } } } };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+<!-- ============ PANTALLA: falta configurar API_URL ============ -->
+<div id="noApiScreen" class="hidden min-h-screen flex items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow p-8 max-w-md text-center">
+    <h1 class="text-xl font-bold text-branding-blue mb-3">Falta configurar el backend</h1>
+    <p class="text-sm text-slate-600">Editá la constante <code class="bg-slate-100 px-1 rounded">CONFIG.API_URL</code> al principio de <code class="bg-slate-100 px-1 rounded">admin.html</code> con la URL <code>/exec</code> de tu implementación de Google Apps Script.</p>
+  </div>
+</div>
+
+<!-- ============ PANTALLA: LOGIN ============ -->
+<div id="loginScreen" class="hidden min-h-screen flex items-center justify-center p-6">
+  <form id="loginForm" onsubmit="handleLogin(event)" class="bg-white rounded-xl shadow-lg p-8 w-full max-w-sm">
+    <img src="img/logo-white.png" class="h-9 mb-6 bg-branding-blue p-2 rounded" alt="Grupo Briones" />
+    <h1 class="text-lg font-bold text-branding-blue mb-6">Ingresar al c-panel</h1>
+    <input name="usuario" type="text" placeholder="Usuario" required class="w-full border rounded-md px-3 py-2 mb-3 text-sm" />
+    <input name="password" type="password" placeholder="Contraseña" required class="w-full border rounded-md px-3 py-2 mb-4 text-sm" />
+    <button type="submit" class="w-full bg-branding-blue text-white rounded-md py-2.5 font-medium hover:brightness-110">Ingresar</button>
+    <p id="loginError" class="text-sm text-red-600 mt-3"></p>
+  </form>
+</div>
+
+<!-- ============ APP (post-login) ============ -->
+<div id="adminApp" class="hidden min-h-screen flex">
+  <aside class="w-64 bg-branding-blue text-white shrink-0 flex flex-col">
+    <div class="p-5 border-b border-white/10">
+      <img src="img/logo-white.png" class="h-8" alt="Grupo Briones" />
+      <p class="text-xs text-white/50 mt-1">C-Panel</p>
+    </div>
+    <nav id="sidebarNav" class="flex-1 overflow-y-auto py-3 text-sm"></nav>
+    <div class="p-4 border-t border-white/10">
+      <button onclick="logout()" class="w-full text-left text-white/70 hover:text-white text-sm">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="flex-1 p-6 lg:p-10 overflow-y-auto max-h-screen">
+    <div id="mainContent"></div>
+  </main>
+</div>
+
+<!-- ============ MODAL: formulario de entidad ============ -->
+<div id="formModal" class="hidden fixed inset-0 z-40 bg-black/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[88vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+      <h3 id="formModalTitle" class="font-semibold text-branding-blue">Nuevo</h3>
+      <button onclick="closeFormModal()" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+    </div>
+    <form id="entityForm" onsubmit="submitEntityForm(event)" class="p-6 space-y-4"></form>
+  </div>
+</div>
+
+<!-- ============ MODAL: galería de imágenes (picker reutilizable) ============ -->
+<div id="galleryModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[88vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+      <h3 class="font-semibold text-branding-blue">Galería de imágenes</h3>
+      <button onclick="closeGalleryModal()" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+    </div>
+    <div class="p-6">
+      <label class="block mb-4">
+        <span class="text-sm font-medium text-branding-blue">Subir imagen nueva</span>
+        <input type="file" accept="image/png,image/jpeg,image/webp" onchange="handleImageUpload(event)" class="block w-full text-sm mt-1" />
+        <span id="uploadStatus" class="text-xs text-slate-500"></span>
+      </label>
+      <div id="galleryGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG
+   ===================================================================== */
+window.CONFIG = {
+  API_URL: "" // pegar acá la URL /exec de tu implementación de Apps Script
+};
+const TOKEN_KEY = 'gb_admin_token';
+const TOKEN_EXP_KEY = 'gb_admin_token_exp';
+const TOKEN_USER_KEY = 'gb_admin_user';
+
+/* =====================================================================
+   API HELPER
+   ===================================================================== */
+async function apiGet(action, params) {
+  const qs = new URLSearchParams({ action, ...(params || {}) });
+  const res = await fetch(window.CONFIG.API_URL + '?' + qs.toString());
+  return res.json();
+}
+async function apiPost(action, payload) {
+  const res = await fetch(window.CONFIG.API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, token: getToken(), ...payload })
+  });
+  const json = await res.json();
+  if (json.authError) { logout(); }
+  return json;
+}
+
+function getToken() { return localStorage.getItem(TOKEN_KEY); }
+function isLoggedIn() {
+  const token = getToken();
+  const exp = Number(localStorage.getItem(TOKEN_EXP_KEY) || 0);
+  return !!token && Date.now() < exp;
+}
+function saveSession(token, usuario, expira) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_EXP_KEY, String(expira));
+  localStorage.setItem(TOKEN_USER_KEY, usuario);
+}
+function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_EXP_KEY);
+  localStorage.removeItem(TOKEN_USER_KEY);
+  boot();
+}
+
+/* =====================================================================
+   ENTIDADES ADMINISTRABLES (config genérica -> genera listado + formulario)
+   ===================================================================== */
+const ENTITIES = {
+  proyectos: {
+    label: 'Proyectos', sheet: 'Proyectos',
+    listAction: 'adminList', saveAction: 'saveProyecto', deleteAction: 'deleteProyecto',
+    columns: ['Nombre', 'Barrio', 'Estado', 'Activo'],
+    fields: [
+      { name: 'Nombre', label: 'Nombre', type: 'text', required: true },
+      { name: 'Slug', label: 'Slug (URL, sin espacios)', type: 'text', required: true },
+      { name: 'Barrio', label: 'Barrio', type: 'text' },
+      { name: 'Estado', label: 'Estado', type: 'text', placeholder: 'En construcción' },
+      { name: 'Direccion', label: 'Dirección', type: 'text' },
+      { name: 'Ambientes', label: 'Ambientes', type: 'text', placeholder: '1 a 3 ambientes' },
+      { name: 'DescripcionCorta', label: 'Descripción corta', type: 'textarea' },
+      { name: 'DescripcionLarga', label: 'Descripción larga', type: 'textarea' },
+      { name: 'ImagenURL', label: 'Imagen principal', type: 'image' },
+      { name: 'GaleriaURLs', label: 'Galería (varias imágenes)', type: 'image-multi' },
+      { name: 'PDFPlanosUrl', label: 'PDF de planos (URL)', type: 'text' },
+      { name: 'Lat', label: 'Latitud', type: 'text' },
+      { name: 'Lng', label: 'Longitud', type: 'text' },
+      { name: 'Orden', label: 'Orden', type: 'number' },
+      { name: 'Activo', label: 'Activo', type: 'checkbox' }
+    ]
+  },
+  amenities: {
+    label: 'Amenities', sheet: 'Amenities',
+    listAction: 'adminList', saveAction: 'saveAmenity', deleteAction: 'deleteAmenity',
+    columns: ['Nombre', 'ProyectoID', 'Orden'],
+    fields: [
+      { name: 'Nombre', label: 'Nombre', type: 'text', required: true },
+      { name: 'ProyectoID', label: 'ID de proyecto (vacío = amenity global)', type: 'text' },
+      { name: 'IconoURL', label: 'Ícono', type: 'image' },
+      { name: 'Orden', label: 'Orden', type: 'number' }
+    ]
+  },
+  blog: {
+    label: 'Blog', sheet: 'Blog',
+    listAction: 'adminList', saveAction: 'saveBlog', deleteAction: 'deleteBlog',
+    columns: ['Titulo', 'Categoria', 'Fecha', 'Activo'],
+    fields: [
+      { name: 'Titulo', label: 'Título', type: 'text', required: true },
+      { name: 'Slug', label: 'Slug (URL)', type: 'text', required: true },
+      { name: 'Categoria', label: 'Categoría', type: 'text' },
+      { name: 'Fecha', label: 'Fecha', type: 'date' },
+      { name: 'Resumen', label: 'Resumen', type: 'textarea' },
+      { name: 'ContenidoHTML', label: 'Contenido (HTML)', type: 'textarea-lg' },
+      { name: 'ImagenURL', label: 'Imagen de portada', type: 'image' },
+      { name: 'Activo', label: 'Publicado', type: 'checkbox' }
+    ]
+  },
+  eventos: {
+    label: 'Eventos', sheet: 'Eventos',
+    listAction: 'adminList', saveAction: 'saveEvento', deleteAction: 'deleteEvento',
+    columns: ['Titulo', 'Orden'],
+    fields: [
+      { name: 'Titulo', label: 'Título', type: 'text', required: true },
+      { name: 'Descripcion', label: 'Descripción', type: 'textarea' },
+      { name: 'ImagenURL', label: 'Imagen', type: 'image' },
+      { name: 'Orden', label: 'Orden', type: 'number' }
+    ]
+  },
+  prensa: {
+    label: 'Prensa', sheet: 'Prensa',
+    listAction: 'adminList', saveAction: 'savePrensa', deleteAction: 'deletePrensa',
+    columns: ['Medio', 'Titulo', 'Fecha'],
+    fields: [
+      { name: 'Medio', label: 'Medio', type: 'text', required: true },
+      { name: 'Titulo', label: 'Título', type: 'text', required: true },
+      { name: 'URL', label: 'URL de la nota', type: 'text' },
+      { name: 'ImagenURL', label: 'Imagen / logo', type: 'image' },
+      { name: 'Fecha', label: 'Fecha', type: 'date' }
+    ]
+  },
+  faqs: {
+    label: 'FAQs', sheet: 'FAQs',
+    listAction: 'adminList', saveAction: 'saveFaq', deleteAction: 'deleteFaq',
+    columns: ['Pregunta', 'Categoria', 'Orden'],
+    fields: [
+      { name: 'Pregunta', label: 'Pregunta', type: 'text', required: true },
+      { name: 'Respuesta', label: 'Respuesta', type: 'textarea', required: true },
+      { name: 'Categoria', label: 'Categoría', type: 'text' },
+      { name: 'Orden', label: 'Orden', type: 'number' }
+    ]
+  },
+  equipo: {
+    label: 'Equipo', sheet: 'Equipo',
+    listAction: 'adminList', saveAction: 'saveEquipo', deleteAction: 'deleteEquipo',
+    columns: ['Nombre', 'Cargo', 'Orden'],
+    fields: [
+      { name: 'Nombre', label: 'Nombre', type: 'text', required: true },
+      { name: 'Cargo', label: 'Cargo', type: 'text' },
+      { name: 'Bio', label: 'Biografía', type: 'textarea' },
+      { name: 'FotoURL', label: 'Foto', type: 'image' },
+      { name: 'Orden', label: 'Orden', type: 'number' }
+    ]
+  },
+  estadisticas: {
+    label: 'Estadísticas (contadores)', sheet: 'Estadisticas',
+    listAction: 'adminList', saveAction: 'saveEstadistica', deleteAction: 'deleteEstadistica',
+    columns: ['Label', 'Valor', 'Orden'],
+    fields: [
+      { name: 'Label', label: 'Etiqueta', type: 'text', required: true },
+      { name: 'Valor', label: 'Valor', type: 'number', required: true },
+      { name: 'Orden', label: 'Orden', type: 'number' }
+    ]
+  }
+};
+
+/* =====================================================================
+   SIDEBAR / NAVEGACIÓN
+   ===================================================================== */
+const MENU = [
+  { id: 'contactos', label: 'Contactos' },
+  { id: 'estadisticas', label: 'Estadísticas' },
+  { id: 'proyectos', label: 'Proyectos' },
+  { id: 'amenities', label: 'Amenities' },
+  { id: 'blog', label: 'Blog' },
+  { id: 'eventos', label: 'Eventos' },
+  { id: 'prensa', label: 'Prensa' },
+  { id: 'faqs', label: 'FAQs' },
+  { id: 'equipo', label: 'Equipo' },
+  { id: 'galeria', label: 'Galería de imágenes' },
+  { id: 'leads', label: 'Leads' },
+  { id: 'cuenta', label: 'Cuenta' }
+];
+
+function renderSidebar(active) {
+  document.getElementById('sidebarNav').innerHTML = MENU.map(m => `
+    <button onclick="navigateTo('${m.id}')"
+      class="w-full text-left px-5 py-2.5 hover:bg-white/10 transition ${active === m.id ? 'bg-white/10 border-r-2 border-branding-sand text-branding-sand' : 'text-white/80'}">
+      ${m.label}
+    </button>`).join('');
+}
+
+function navigateTo(id) {
+  location.hash = '#/' + id;
+}
+
+window.addEventListener('hashchange', renderMain);
+
+async function renderMain() {
+  if (!isLoggedIn()) return;
+  const id = (location.hash || '#/contactos').replace('#/', '') || 'contactos';
+  renderSidebar(id);
+  const content = document.getElementById('mainContent');
+  content.innerHTML = '<p class="text-slate-400">Cargando...</p>';
+
+  if (id === 'contactos') return renderContactosPage();
+  if (id === 'galeria') return renderGaleriaPage();
+  if (id === 'leads') return renderLeadsPage();
+  if (id === 'cuenta') return renderCuentaPage();
+  if (ENTITIES[id]) return renderEntityPage(id);
+  content.innerHTML = '<p>Sección no encontrada.</p>';
+}
+
+/* =====================================================================
+   PÁGINA: CONTACTOS (registro único)
+   ===================================================================== */
+async function renderContactosPage() {
+  const res = await apiGet('getContactos');
+  const c = res.data || {};
+  document.getElementById('mainContent').innerHTML = `
+    <h1 class="text-xl font-bold text-branding-blue mb-6">Contactos y redes</h1>
+    <form id="contactosForm" onsubmit="submitContactos(event)" class="bg-white rounded-xl p-6 max-w-xl space-y-4 shadow-sm">
+      ${['Direccion','Telefono','Email','Instagram','TikTok','YouTube','LinkedIn','Facebook'].map(f => `
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">${f}</label>
+          <input name="${f}" value="${(c[f] || '').toString().replace(/"/g,'&quot;')}" class="w-full border rounded-md px-3 py-2 text-sm" />
+        </div>`).join('')}
+      <button type="submit" class="bg-branding-blue text-white px-5 py-2.5 rounded-md font-medium">Guardar</button>
+      <p id="contactosMsg" class="text-sm"></p>
+    </form>`;
+}
+async function submitContactos(evt) {
+  evt.preventDefault();
+  const form = evt.target;
+  const data = {};
+  ['Direccion','Telefono','Email','Instagram','TikTok','YouTube','LinkedIn','Facebook'].forEach(f => data[f] = form[f].value);
+  const res = await apiPost('updateContactos', { contactos: data });
+  document.getElementById('contactosMsg').textContent = res.ok ? 'Guardado correctamente.' : (res.error || 'Error al guardar.');
+  document.getElementById('contactosMsg').className = 'text-sm ' + (res.ok ? 'text-green-600' : 'text-red-600');
+}
+
+/* =====================================================================
+   PÁGINA: entidad genérica (listado + alta/edición/borrado)
+   ===================================================================== */
+let currentEntityId = null;
+let currentEntityData = [];
+
+async function renderEntityPage(id) {
+  currentEntityId = id;
+  const entity = ENTITIES[id];
+  const res = await apiPost(entity.listAction, { sheet: entity.sheet });
+  currentEntityData = res.ok ? res.data : [];
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-bold text-branding-blue">${entity.label}</h1>
+      <button onclick="openEntityForm('${id}')" class="bg-branding-blue text-white px-4 py-2 rounded-md text-sm font-medium">+ Nuevo</button>
+    </div>
+    ${!res.ok ? `<p class="text-red-600 text-sm mb-4">${res.error || 'Error al cargar.'}</p>` : ''}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+          <tr>
+            ${entity.columns.map(c => `<th class="text-left px-4 py-3">${c}</th>`).join('')}
+            <th class="px-4 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          ${currentEntityData.map(row => `
+            <tr>
+              ${entity.columns.map(c => `<td class="px-4 py-3">${formatCell(row[c])}</td>`).join('')}
+              <td class="px-4 py-3 text-right space-x-3">
+                <button onclick="openEntityForm('${id}', '${row.ID}')" class="text-branding-blue hover:underline">Editar</button>
+                <button onclick="deleteEntityRow('${id}', '${row.ID}')" class="text-red-600 hover:underline">Eliminar</button>
+              </td>
+            </tr>`).join('')}
+          ${currentEntityData.length === 0 ? `<tr><td colspan="${entity.columns.length + 1}" class="px-4 py-6 text-center text-slate-400">Sin registros todavía.</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function formatCell(v) {
+  if (v === true) return '✅';
+  if (v === false) return '—';
+  return v ?? '';
+}
+
+function openEntityForm(entityId, rowId) {
+  const entity = ENTITIES[entityId];
+  const record = rowId ? currentEntityData.find(r => String(r.ID) === String(rowId)) : {};
+  document.getElementById('formModalTitle').textContent = (rowId ? 'Editar' : 'Nuevo') + ' — ' + entity.label;
+
+  document.getElementById('entityForm').innerHTML = `
+    <input type="hidden" name="__entityId" value="${entityId}">
+    <input type="hidden" name="ID" value="${record.ID || ''}">
+    ${entity.fields.map(f => fieldTemplate(f, record)).join('')}
+    <div class="pt-2 flex gap-3">
+      <button type="submit" class="bg-branding-blue text-white px-5 py-2.5 rounded-md font-medium text-sm">Guardar</button>
+      <button type="button" onclick="closeFormModal()" class="px-5 py-2.5 rounded-md text-sm border">Cancelar</button>
+    </div>`;
+
+  document.getElementById('formModal').classList.remove('hidden');
+  document.getElementById('formModal').classList.add('flex');
+}
+
+function fieldTemplate(f, record) {
+  const value = (record[f.name] ?? '').toString();
+  const safe = value.replace(/"/g, '&quot;');
+  if (f.type === 'textarea' || f.type === 'textarea-lg') {
+    return `<div>
+      <label class="block text-sm font-medium text-slate-600 mb-1">${f.label}</label>
+      <textarea name="${f.name}" rows="${f.type === 'textarea-lg' ? 8 : 3}" class="w-full border rounded-md px-3 py-2 text-sm">${value}</textarea>
+    </div>`;
+  }
+  if (f.type === 'checkbox') {
+    const checked = record[f.name] === true || String(record[f.name]).toUpperCase() === 'TRUE';
+    return `<label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="${f.name}" ${checked ? 'checked' : ''}> ${f.label}
+    </label>`;
+  }
+  if (f.type === 'image') {
+    return `<div>
+      <label class="block text-sm font-medium text-slate-600 mb-1">${f.label}</label>
+      <div class="flex items-center gap-3">
+        <img data-preview-for="${f.name}" src="${value || ''}" class="h-16 w-16 object-cover rounded border ${value ? '' : 'hidden'}" onerror="this.classList.add('hidden')">
+        <button type="button" onclick="openGalleryPicker({multi:false, onSelect: (url) => setImageField('${f.name}', url)})" class="text-sm border rounded-md px-3 py-1.5">Seleccionar imagen</button>
+      </div>
+      <input type="hidden" name="${f.name}" id="field-${f.name}" value="${safe}">
+    </div>`;
+  }
+  if (f.type === 'image-multi') {
+    const urls = value.split(',').map(s => s.trim()).filter(Boolean);
+    return `<div>
+      <label class="block text-sm font-medium text-slate-600 mb-1">${f.label}</label>
+      <div id="multi-${f.name}" class="flex flex-wrap gap-2 mb-2">
+        ${urls.map(u => imageMultiThumb(f.name, u)).join('')}
+      </div>
+      <button type="button" onclick="openGalleryPicker({multi:true, onSelect: (urls) => addImageFieldMulti('${f.name}', urls)})" class="text-sm border rounded-md px-3 py-1.5">Agregar imágenes</button>
+      <input type="hidden" name="${f.name}" id="field-${f.name}" value="${safe}">
+    </div>`;
+  }
+  return `<div>
+    <label class="block text-sm font-medium text-slate-600 mb-1">${f.label}</label>
+    <input name="${f.name}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}"
+      value="${safe}" placeholder="${f.placeholder || ''}" ${f.required ? 'required' : ''}
+      class="w-full border rounded-md px-3 py-2 text-sm">
+  </div>`;
+}
+
+function imageMultiThumb(fieldName, url) {
+  return `<div class="relative">
+    <img src="${url}" class="h-16 w-16 object-cover rounded border">
+    <button type="button" onclick="removeImageFieldMulti('${fieldName}', '${url}')" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 text-xs leading-5">×</button>
+  </div>`;
+}
+
+function setImageField(fieldName, url) {
+  document.getElementById('field-' + fieldName).value = url;
+  const preview = document.querySelector(`[data-preview-for="${fieldName}"]`);
+  if (preview) { preview.src = url; preview.classList.remove('hidden'); }
+}
+function addImageFieldMulti(fieldName, urls) {
+  const input = document.getElementById('field-' + fieldName);
+  const current = input.value.split(',').map(s => s.trim()).filter(Boolean);
+  const merged = Array.from(new Set([...current, ...urls]));
+  input.value = merged.join(',');
+  document.getElementById('multi-' + fieldName).innerHTML = merged.map(u => imageMultiThumb(fieldName, u)).join('');
+}
+function removeImageFieldMulti(fieldName, url) {
+  const input = document.getElementById('field-' + fieldName);
+  const remaining = input.value.split(',').map(s => s.trim()).filter(u => u && u !== url);
+  input.value = remaining.join(',');
+  document.getElementById('multi-' + fieldName).innerHTML = remaining.map(u => imageMultiThumb(fieldName, u)).join('');
+}
+
+function closeFormModal() {
+  document.getElementById('formModal').classList.add('hidden');
+  document.getElementById('formModal').classList.remove('flex');
+}
+
+async function submitEntityForm(evt) {
+  evt.preventDefault();
+  const form = evt.target;
+  const entityId = form.__entityId.value;
+  const entity = ENTITIES[entityId];
+  const item = {};
+  if (form.ID.value) item.ID = form.ID.value;
+  entity.fields.forEach(f => {
+    if (f.type === 'checkbox') item[f.name] = form[f.name].checked;
+    else item[f.name] = form[f.name].value;
+  });
+  const res = await apiPost(entity.saveAction, { item });
+  if (res.ok) {
+    closeFormModal();
+    renderEntityPage(entityId);
+  } else {
+    alert(res.error || 'Error al guardar.');
+  }
+}
+
+async function deleteEntityRow(entityId, id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  const entity = ENTITIES[entityId];
+  const res = await apiPost(entity.deleteAction, { id });
+  if (res.ok) renderEntityPage(entityId);
+  else alert(res.error || 'Error al eliminar.');
+}
+
+/* =====================================================================
+   PÁGINA: GALERÍA DE IMÁGENES (vista completa)
+   ===================================================================== */
+async function renderGaleriaPage() {
+  const res = await apiPost('listImages', {});
+  const images = res.ok ? res.data : [];
+  document.getElementById('mainContent').innerHTML = `
+    <h1 class="text-xl font-bold text-branding-blue mb-6">Galería de imágenes</h1>
+    <label class="block mb-6 bg-white rounded-xl p-6 shadow-sm max-w-md">
+      <span class="text-sm font-medium text-branding-blue">Subir imagen nueva</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp" onchange="handleImageUpload(event, () => renderGaleriaPage())" class="block w-full text-sm mt-2" />
+      <span id="uploadStatus" class="text-xs text-slate-500"></span>
+    </label>
+    ${!res.ok ? `<p class="text-red-600 text-sm mb-4">${res.error || 'Error al cargar imágenes.'}</p>` : ''}
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+      ${images.map(img => `
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <img src="${img.URLPublica}" class="h-28 w-full object-cover">
+          <div class="p-2">
+            <p class="text-xs truncate" title="${img.NombreOriginal}">${img.NombreOriginal}</p>
+            <button onclick="deleteImageFromGallery('${img.ID}')" class="text-xs text-red-600 hover:underline mt-1">Eliminar</button>
+          </div>
+        </div>`).join('')}
+      ${images.length === 0 ? '<p class="text-slate-400 text-sm col-span-full">Todavía no subiste ninguna imagen.</p>' : ''}
+    </div>`;
+}
+async function deleteImageFromGallery(id) {
+  if (!confirm('¿Eliminar esta imagen del repositorio?')) return;
+  const res = await apiPost('deleteImage', { id });
+  if (res.ok) renderGaleriaPage();
+  else alert(res.error || 'No se pudo eliminar.');
+}
+
+/* =====================================================================
+   MODAL: selector de imágenes reutilizable (picker)
+   ===================================================================== */
+let galleryPickerConfig = null;
+let gallerySelection = new Set();
+
+async function openGalleryPicker(config) {
+  galleryPickerConfig = config;
+  gallerySelection = new Set();
+  document.getElementById('galleryModal').classList.remove('hidden');
+  document.getElementById('galleryModal').classList.add('flex');
+  await loadGalleryGrid();
+}
+function closeGalleryModal() {
+  document.getElementById('galleryModal').classList.add('hidden');
+  document.getElementById('galleryModal').classList.remove('flex');
+}
+async function loadGalleryGrid() {
+  const res = await apiPost('listImages', {});
+  const images = res.ok ? res.data : [];
+  document.getElementById('galleryGrid').innerHTML = images.map(img => `
+    <button type="button" onclick="toggleGallerySelect('${img.URLPublica}', this)"
+      class="relative border-2 border-transparent rounded-lg overflow-hidden hover:border-branding-sand transition">
+      <img src="${img.URLPublica}" class="h-24 w-full object-cover">
+    </button>`).join('') || '<p class="text-slate-400 text-sm col-span-full">Subí una imagen para poder seleccionarla.</p>';
+
+  if (!galleryPickerConfig.multi) return;
+  const confirmBar = document.createElement('div');
+  confirmBar.className = 'col-span-full flex justify-end pt-2';
+  confirmBar.innerHTML = `<button type="button" onclick="confirmGallerySelection()" class="bg-branding-blue text-white px-4 py-2 rounded-md text-sm">Usar seleccionadas</button>`;
+  document.getElementById('galleryGrid').appendChild(confirmBar);
+}
+function toggleGallerySelect(url, btn) {
+  if (!galleryPickerConfig.multi) {
+    galleryPickerConfig.onSelect(url);
+    closeGalleryModal();
+    return;
+  }
+  if (gallerySelection.has(url)) { gallerySelection.delete(url); btn.classList.remove('border-branding-sand'); }
+  else { gallerySelection.add(url); btn.classList.add('border-branding-sand'); }
+}
+function confirmGallerySelection() {
+  galleryPickerConfig.onSelect(Array.from(gallerySelection));
+  closeGalleryModal();
+}
+
+/* =====================================================================
+   SUBIDA DE IMÁGENES (compresión en cliente + upload a Apps Script)
+   ===================================================================== */
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const dataUrl = canvas.toDataURL(mime, quality);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: mime });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageUpload(evt, onDone) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('La imagen pesa más de 5MB, elegí una más liviana.'); return; }
+
+  const statusEls = document.querySelectorAll('#uploadStatus');
+  statusEls.forEach(el => el.textContent = 'Comprimiendo y subiendo...');
+
+  try {
+    const { base64, mimeType } = await compressImage(file, 1920, 0.8);
+    const res = await apiPost('uploadImage', { nombreOriginal: file.name, mimeType, contenidoBase64: base64 });
+    statusEls.forEach(el => el.textContent = res.ok ? 'Imagen subida.' : (res.error || 'Error al subir.'));
+    if (res.ok) {
+      if (typeof onDone === 'function') onDone();
+      if (document.getElementById('galleryModal').classList.contains('flex')) await loadGalleryGrid();
+    }
+  } catch (err) {
+    statusEls.forEach(el => el.textContent = 'Error al procesar la imagen.');
+  }
+  evt.target.value = '';
+}
+
+/* =====================================================================
+   PÁGINA: LEADS (solo lectura)
+   ===================================================================== */
+async function renderLeadsPage() {
+  const res = await apiPost('getLeads', {});
+  const leads = res.ok ? res.data : [];
+  document.getElementById('mainContent').innerHTML = `
+    <h1 class="text-xl font-bold text-branding-blue mb-6">Leads recibidos</h1>
+    ${!res.ok ? `<p class="text-red-600 text-sm mb-4">${res.error || 'Error al cargar.'}</p>` : ''}
+    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+          <tr>
+            <th class="text-left px-4 py-3">Fecha</th>
+            <th class="text-left px-4 py-3">Nombre</th>
+            <th class="text-left px-4 py-3">Email</th>
+            <th class="text-left px-4 py-3">Teléfono</th>
+            <th class="text-left px-4 py-3">Ambiente</th>
+            <th class="text-left px-4 py-3">Zona</th>
+            <th class="text-left px-4 py-3">Origen</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          ${leads.map(l => `
+            <tr>
+              <td class="px-4 py-3 whitespace-nowrap">${new Date(l.Timestamp).toLocaleString('es-AR')}</td>
+              <td class="px-4 py-3">${l.Nombre || ''}</td>
+              <td class="px-4 py-3">${l.Email || ''}</td>
+              <td class="px-4 py-3">${l.Telefono || ''}</td>
+              <td class="px-4 py-3">${l.Ambiente || ''}</td>
+              <td class="px-4 py-3">${l.Zona || ''}</td>
+              <td class="px-4 py-3">${l.Origen || ''}</td>
+            </tr>`).join('')}
+          ${leads.length === 0 ? '<tr><td colspan="7" class="px-4 py-6 text-center text-slate-400">Todavía no hay leads.</td></tr>' : ''}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* =====================================================================
+   PÁGINA: CUENTA (cambiar usuario / contraseña)
+   ===================================================================== */
+function renderCuentaPage() {
+  document.getElementById('mainContent').innerHTML = `
+    <h1 class="text-xl font-bold text-branding-blue mb-6">Mi cuenta</h1>
+    <form id="cuentaForm" onsubmit="submitCuenta(event)" class="bg-white rounded-xl p-6 max-w-sm space-y-4 shadow-sm">
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">Nuevo usuario (opcional)</label>
+        <input name="nuevoUsuario" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="${localStorage.getItem(TOKEN_USER_KEY) || ''}">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">Nueva contraseña (opcional)</label>
+        <input name="nuevaPassword" type="password" class="w-full border rounded-md px-3 py-2 text-sm">
+      </div>
+      <button type="submit" class="bg-branding-blue text-white px-5 py-2.5 rounded-md font-medium text-sm">Guardar</button>
+      <p id="cuentaMsg" class="text-sm"></p>
+    </form>`;
+}
+async function submitCuenta(evt) {
+  evt.preventDefault();
+  const form = evt.target;
+  const res = await apiPost('changeCredentials', {
+    nuevoUsuario: form.nuevoUsuario.value || undefined,
+    nuevaPassword: form.nuevaPassword.value || undefined
+  });
+  document.getElementById('cuentaMsg').textContent = res.ok ? 'Datos actualizados.' : (res.error || 'Error.');
+  document.getElementById('cuentaMsg').className = 'text-sm ' + (res.ok ? 'text-green-600' : 'text-red-600');
+  if (res.ok && form.nuevoUsuario.value) localStorage.setItem(TOKEN_USER_KEY, form.nuevoUsuario.value);
+}
+
+/* =====================================================================
+   LOGIN / BOOT
+   ===================================================================== */
+async function handleLogin(evt) {
+  evt.preventDefault();
+  const form = evt.target;
+  const errorEl = document.getElementById('loginError');
+  errorEl.textContent = '';
+  const res = await apiPost('login', { usuario: form.usuario.value, password: form.password.value });
+  if (res.ok) {
+    saveSession(res.token, res.usuario, res.expira);
+    boot();
+  } else {
+    errorEl.textContent = res.error || 'No se pudo iniciar sesión.';
+  }
+}
+
+function show(id) {
+  ['noApiScreen', 'loginScreen', 'adminApp'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+    document.getElementById(s).classList.toggle('flex', s === id && s !== 'adminApp');
+  });
+}
+
+function boot() {
+  if (!window.CONFIG.API_URL) { show('noApiScreen'); return; }
+  if (!isLoggedIn()) { show('loginScreen'); return; }
+  document.getElementById('noApiScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('adminApp').classList.remove('hidden');
+  document.getElementById('adminApp').classList.add('flex');
+  if (!location.hash) location.hash = '#/contactos';
+  renderMain();
+}
+
+window.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>

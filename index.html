@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grupo Briones | Desarrollos Inmobiliarios en CABA</title>
+<meta name="description" content="Desarrollos inmobiliarios en pozo en las mejores zonas de Buenos Aires. Entrega en tiempo y forma, con los más altos estándares de calidad." />
+<link rel="icon" href="img/logo-white.png" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'branding-blue': '#0B2A4A',
+          'branding-sand': '#C9A876'
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        }
+      }
+    }
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  html { scroll-behavior: smooth; }
+  .fade-in { animation: fadeIn .4s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .marquee-track { animation: marquee 18s linear infinite; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .lightbox-open { overflow: hidden; }
+</style>
+</head>
+<body class="text-slate-800 bg-white">
+
+<!-- ============ CONFIG ============ -->
+<script>
+  // Reemplazar por la URL /exec de tu implementación de Apps Script.
+  // Mientras esté vacío, el sitio funciona con contenido de referencia local
+  // (FALLBACK_DATA) para poder probar el diseño sin backend desplegado.
+  window.CONFIG = {
+    API_URL: "https://script.google.com/macros/s/AKfycbzVwaJyu7f3iL4AH68uPOiLsgHvgJBE57pkFY9b6VTEsx4wn_efK-mXz-QHVj-TRaG3/exec" // ej: "https://script.google.com/macros/s/XXXXXXXX/exec"
+  };
+</script>
+
+<!-- ============ HEADER ============ -->
+<header class="fixed top-0 left-0 right-0 z-40 bg-branding-blue/95 backdrop-blur text-white">
+  <div class="max-w-7xl mx-auto px-5 lg:px-8 h-20 flex items-center justify-between">
+    <a href="#/" class="flex items-center gap-2">
+      <img src="img/logo-white.png" alt="Grupo Briones" class="h-9" />
+    </a>
+    <nav class="hidden lg:flex items-center gap-7 text-[15px]">
+      <a href="#/" class="hover:text-branding-sand transition-colors">Inicio</a>
+      <a href="#/nosotros" class="hover:text-branding-sand transition-colors">Nosotros</a>
+      <a href="#/proyectos" class="hover:text-branding-sand transition-colors">Proyectos</a>
+      <a href="#/blog" class="hover:text-branding-sand transition-colors">Blog</a>
+      <a href="#/faqs" class="hover:text-branding-sand transition-colors">FAQs</a>
+      <a href="#/eventos" class="hover:text-branding-sand transition-colors">Eventos</a>
+      <a href="#/prensa" class="hover:text-branding-sand transition-colors">Prensa</a>
+    </nav>
+    <div class="hidden lg:block">
+      <button onclick="scrollToLeadForm()" class="rounded-md bg-branding-sand text-branding-blue font-medium text-[15px] px-5 py-2.5 hover:brightness-95 transition">Consultar</button>
+    </div>
+    <button id="mobileMenuBtn" class="lg:hidden" aria-label="Abrir menú">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div id="mobileMenu" class="hidden lg:hidden bg-branding-blue border-t border-white/10 px-5 py-4 flex flex-col gap-4 text-[15px]">
+    <a href="#/" class="mobile-link">Inicio</a>
+    <a href="#/nosotros" class="mobile-link">Nosotros</a>
+    <a href="#/proyectos" class="mobile-link">Proyectos</a>
+    <a href="#/blog" class="mobile-link">Blog</a>
+    <a href="#/faqs" class="mobile-link">FAQs</a>
+    <a href="#/eventos" class="mobile-link">Eventos</a>
+    <a href="#/prensa" class="mobile-link">Prensa</a>
+    <button onclick="scrollToLeadForm()" class="rounded-md bg-branding-sand text-branding-blue font-medium px-5 py-2.5 text-left">Consultar</button>
+  </div>
+</header>
+
+<!-- ============ APP ROOT ============ -->
+<main id="app" class="pt-20 min-h-[60vh]"></main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="bg-branding-blue text-white/80 mt-16">
+  <div class="max-w-7xl mx-auto px-5 lg:px-8 py-14 grid gap-10 md:grid-cols-4">
+    <div>
+      <img src="img/logo-white.png" alt="Grupo Briones" class="h-9 mb-4" />
+      <p class="text-sm text-white/60">Desarrollos inmobiliarios de calidad, en la Ciudad de Buenos Aires.</p>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-3 text-sm tracking-wide uppercase">Navegación</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#/" class="hover:text-branding-sand">Inicio</a></li>
+        <li><a href="#/nosotros" class="hover:text-branding-sand">Nosotros</a></li>
+        <li><a href="#/proyectos" class="hover:text-branding-sand">Proyectos</a></li>
+        <li><a href="#/blog" class="hover:text-branding-sand">Blog</a></li>
+        <li><a href="#/faqs" class="hover:text-branding-sand">FAQs</a></li>
+        <li><a href="#/eventos" class="hover:text-branding-sand">Eventos</a></li>
+        <li><a href="#/prensa" class="hover:text-branding-sand">Prensa</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-3 text-sm tracking-wide uppercase">Redes</h4>
+      <ul id="footerRedes" class="space-y-2 text-sm"></ul>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-3 text-sm tracking-wide uppercase">Contacto</h4>
+      <ul id="footerContacto" class="space-y-2 text-sm"></ul>
+    </div>
+  </div>
+  <div class="border-t border-white/10 py-5 text-center text-xs text-white/50">
+    © <span id="footerYear"></span> Grupo Briones — Todos los derechos reservados.
+  </div>
+</footer>
+
+<!-- ============ WHATSAPP FLOTANTE ============ -->
+<button id="whatsappBtn" aria-label="Contact us on WhatsApp" class="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-[#25D366] shadow-lg flex items-center justify-center hover:scale-105 transition">
+  <img src="img/icon-whatsapp.svg" alt="whatsapp" class="w-7 h-7" />
+</button>
+
+<!-- ============ LIGHTBOX (galería de fotos) ============ -->
+<div id="lightbox" class="hidden fixed inset-0 z-50 bg-black/90 items-center justify-center p-6">
+  <button onclick="closeLightbox()" class="absolute top-5 right-6 text-white text-3xl leading-none">&times;</button>
+  <img id="lightboxImg" src="" alt="" class="max-h-[85vh] max-w-full rounded-md" />
+</div>
+
+<script>
+/* =====================================================================
+   DATOS DE REFERENCIA (fallback mientras no haya API_URL configurada)
+   ===================================================================== */
+const FALLBACK_DATA = {
+  contactos: {
+    Direccion: "Cerrito 1186, CABA",
+    Telefono: "+54 9 11 2468-2070",
+    Email: "contacto@grupobriones.com.ar",
+    Instagram: "https://www.instagram.com/grupobriones/",
+    TikTok: "https://www.tiktok.com/@grupobriones",
+    YouTube: "https://www.youtube.com/@beltranbriones",
+    LinkedIn: "https://www.linkedin.com/company/grupobriones/",
+    Facebook: "https://www.facebook.com/profile.php?id=61582398871835"
+  },
+  estadisticas: [
+    { Label: "Edificios entregados por los socios", Valor: 12, Orden: 1 },
+    { Label: "Departamentos entregados", Valor: 350, Orden: 2 },
+    { Label: "M² construidos", Valor: 45000, Orden: 3 }
+  ],
+  proyectos: [
+    {
+      ID: "palermo", Slug: "palermo", Nombre: "Brigos | Palermo", Barrio: "Palermo", Estado: "En construcción",
+      Direccion: "Avenida Córdoba 4309", ImagenURL: "img/proyecto-palermo-exterior.jpg",
+      GaleriaURLs: "img/proyecto-palermo-exterior.jpg",
+      DescripcionCorta: "Edificio de 13 pisos con unidades de 1 a 3 ambientes, aptas para vivienda o uso profesional. Los ambientes priorizan la luz natural, la ventilación y una distribución cómoda para la vida diaria.",
+      DescripcionLarga: "Ubicado en Palermo, uno de los barrios más dinámicos y demandados de la Ciudad de Buenos Aires, se desarrolla en un punto estratégico con excelente conectividad urbana. Con acceso directo a Avenida Córdoba y cercanía a Avenida Scalabrini Ortiz y Avenida Estado de Israel, la zona cuenta con múltiples medios de transporte y una amplia oferta comercial y gastronómica.",
+      Ambientes: "1 a 3 ambientes", PDFPlanosUrl: ""
+    },
+    {
+      ID: "brigos-recoleta", Slug: "brigos-recoleta", Nombre: "Brigos | Recoleta", Barrio: "Recoleta", Estado: "En construcción",
+      Direccion: "Larrea 838", ImagenURL: "img/proyecto-recoleta-exterior.jpg",
+      GaleriaURLs: "img/proyecto-recoleta-exterior.jpg",
+      DescripcionCorta: "Edificio de 13 pisos con unidades de 1 a 3 ambientes, aptas para vivienda o uso profesional.",
+      DescripcionLarga: "Ubicado en Recoleta, uno de los barrios más buscados de la Ciudad de Buenos Aires, en una zona estratégica con excelente conectividad. A metros de Avenida Santa Fe y Avenida Las Heras, y con cercanía a múltiples medios de transporte.",
+      Ambientes: "1 a 3 ambientes", PDFPlanosUrl: ""
+    },
+    {
+      ID: "brigos-nunez", Slug: "brigos-nunez", Nombre: "Brigos | Nuñez", Barrio: "Núñez", Estado: "En construcción",
+      Direccion: "Núñez", ImagenURL: "img/proyecto-nunez-render.jpg",
+      GaleriaURLs: "img/proyecto-nunez-render.jpg",
+      DescripcionCorta: "Diseño moderno que se adapta a tu estilo de vida, ofrece 14 pisos con amplias unidades de 1 y 2 ambientes.",
+      DescripcionLarga: "Destacadas por su luminosidad, funcionalidad y equipamiento premium en cocinas y baños. Un proyecto conectado, ideal para quienes buscan estilo y cercanía a los principales accesos de la ciudad.",
+      Ambientes: "1 y 2 ambientes", PDFPlanosUrl: ""
+    },
+    {
+      ID: "casa-huidobro", Slug: "casa-huidobro", Nombre: "Casa Huidobro", Barrio: "Saavedra", Estado: "En construcción",
+      Direccion: "Saavedra", ImagenURL: "img/proyecto-huidobro-exterior.jpg",
+      GaleriaURLs: "img/proyecto-huidobro-exterior.jpg,img/proyecto-huidobro-terraza.jpg,img/proyecto-huidobro-saavedra.jpg",
+      DescripcionCorta: "Edificio de 7 pisos con unidades de 1 a 4 ambientes, aptas para vivienda o uso profesional.",
+      DescripcionLarga: "Ubicado en Saavedra, un barrio tranquilo y en plena expansión, a metros del Parque Saavedra y con rápidos accesos a General Paz, Balbín y Cabildo. Una zona con excelente conectividad y una creciente oferta gastronómica y comercial.",
+      Ambientes: "1 a 4 ambientes", PDFPlanosUrl: ""
+    }
+  ],
+  amenitiesGlobal: [
+    { Nombre: "Balcones amplios" }, { Nombre: "Gimnasio" }, { Nombre: "Solarium" }, { Nombre: "Pileta" }
+  ],
+  amenitiesPorProyecto: {
+    "casa-huidobro": ["Espacios comunes", "Terrazas", "Parrilla", "Jardín", "Pileta"]
+  },
+  blog: [
+    { Slug: "invertir-en-saavedra-potencial-inmobiliario", Categoria: "Saavedra", Fecha: "2025-12-14", Titulo: "Invertir en Saavedra: un barrio en crecimiento con gran potencial inmobiliario", Resumen: "Saavedra se consolida como una de las mejores zonas para invertir en CABA, con precios competitivos, espacios verdes y gran proyección de valorización.", ImagenURL: "img/blog-1.jpg", ContenidoHTML: "<p>Saavedra se consolida como una de las mejores zonas para invertir en CABA, con precios competitivos, espacios verdes y gran proyección de valorización.</p>" },
+    { Slug: "demanda-departamentos-saavedra-nunez", Categoria: "Barrios", Fecha: "2025-12-14", Titulo: "Qué tipo de departamentos tienen mayor demanda en Saavedra y Núñez", Resumen: "Saavedra y Núñez muestran demandas inmobiliarias distintas. Conocé qué tipo de departamentos se buscan más en cada barrio y cómo invertir mejor.", ImagenURL: "img/blog-2.jpg", ContenidoHTML: "<p>Saavedra y Núñez muestran demandas inmobiliarias distintas. Conocé qué tipo de departamentos se buscan más en cada barrio y cómo invertir mejor.</p>" },
+    { Slug: "que-es-una-desarrolladora-inmobiliaria", Categoria: "Desarrollo", Fecha: "2025-12-14", Titulo: "Qué es una desarrolladora inmobiliaria y por qué elegir bien puede cambiar tu forma de acceder a la vivienda", Resumen: "Entender el rol de una desarrolladora inmobiliaria puede marcar la diferencia entre seguir alquilando o acceder a la vivienda propia.", ImagenURL: "img/obra-avance-1.jpg", ContenidoHTML: "<p>Entender el rol de una desarrolladora inmobiliaria puede marcar la diferencia entre seguir alquilando o acceder a la vivienda propia con un proceso claro y acompañado.</p>" }
+  ],
+  faqs: [
+    { Categoria: "Inversión", Pregunta: "¿Cuáles son los beneficios de invertir en un departamento en pozo en comparación con uno ya construido?", Respuesta: "Precio inicial más bajo, potencial de valorización durante la construcción, tecnología y eficiencia más modernas, y garantías del desarrollador sobre una construcción nueva." },
+    { Categoria: "Inversión", Pregunta: "¿Cuáles son los riesgos asociados con la compra de un departamento en pozo y cómo pueden mitigarse?", Respuesta: "Elegir un desarrollador con trayectoria comprobada y contratos claros reduce los riesgos de demoras o incumplimientos." },
+    { Categoria: "Ubicación", Pregunta: "¿Qué aspectos debo considerar al elegir la ubicación para mi futuro departamento en pozo?", Respuesta: "Conectividad, oferta de transporte, servicios cercanos y proyección de valorización del barrio." },
+    { Categoria: "Garantías", Pregunta: "¿Qué garantías y protecciones tengo como comprador de un departamento en pozo?", Respuesta: "Depende del vehículo legal del proyecto (fideicomiso o sociedad); consultá siempre la documentación específica de cada desarrollo." },
+    { Categoria: "Empresa", Pregunta: "¿Cuántos proyectos tiene entregados el Grupo Briones?", Respuesta: "Los socios fundadores suman más de una decena de edificios entregados a lo largo de su carrera como desarrolladores." }
+  ],
+  eventos: [
+    { Titulo: "Evento Grupo Expansión de Ecuador", Descripcion: "Con más de 600 asistentes en Quito." },
+    { Titulo: "FNS Forum - San Juan", Descripcion: "Participación como disertante en FNS Forum." },
+    { Titulo: "Expo Real Estate", Descripcion: "Evento sobre Real Estate para 1200 personas en Palais Rouge." }
+  ],
+  prensa: [
+    { Medio: "Infobae", Titulo: "Grupo Briones y el real estate porteño", URL: "#" },
+    { Medio: "Clarín", Titulo: "Desarrollos en pozo: la mirada de Grupo Briones", URL: "#" },
+    { Medio: "Forbes", Titulo: "El método Briones", URL: "#" }
+  ],
+  equipo: [
+    { Nombre: "Beltrán Briones", Cargo: "Cofundador", Bio: "Supervisó la construcción y entrega de 12 edificios. Cofundador de El Club del Ladrillo. Autor de 'El método Briones'.", FotoURL: "" },
+    { Nombre: "Iván Briones", Cargo: "Cofundador", Bio: "20 años de experiencia como Gerente y director en bancos de Argentina y el exterior. Supervisó la entrega de 24 edificios.", FotoURL: "" }
+  ]
+};
+
+/* =====================================================================
+   API HELPER
+   ===================================================================== */
+async function apiGet(action, params) {
+  if (!window.CONFIG.API_URL) return null;
+  const qs = new URLSearchParams({ action, ...(params || {}) });
+  try {
+    const res = await fetch(window.CONFIG.API_URL + '?' + qs.toString());
+    const json = await res.json();
+    return json.ok ? json.data : null;
+  } catch (e) {
+    console.warn('API GET falló, usando datos de referencia', e);
+    return null;
+  }
+}
+
+async function apiPost(action, payload) {
+  if (!window.CONFIG.API_URL) return { ok: false, error: 'API_URL no configurada todavía.' };
+  const res = await fetch(window.CONFIG.API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, ...payload })
+  });
+  return res.json();
+}
+
+async function loadOr(action, params, fallback) {
+  const data = await apiGet(action, params);
+  return (data && (Array.isArray(data) ? data.length > 0 : true)) ? data : fallback;
+}
+
+/* =====================================================================
+   HEADER / FOOTER DINÁMICOS
+   ===================================================================== */
+function scrollToLeadForm() {
+  location.hash = '#/';
+  setTimeout(() => {
+    const el = document.getElementById('lead-form');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }, 60);
+}
+
+document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+  document.getElementById('mobileMenu').classList.toggle('hidden');
+});
+document.querySelectorAll('.mobile-link').forEach(a => a.addEventListener('click', () => {
+  document.getElementById('mobileMenu').classList.add('hidden');
+}));
+document.getElementById('whatsappBtn').addEventListener('click', async () => {
+  const c = await loadOr('getContactos', null, FALLBACK_DATA.contactos);
+  const tel = (c.Telefono || '').replace(/[^0-9]/g, '');
+  window.open('https://wa.me/' + tel, '_blank');
+});
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+async function renderFooterContacts() {
+  const c = await loadOr('getContactos', null, FALLBACK_DATA.contactos);
+  const redes = [
+    ['Instagram', c.Instagram], ['TikTok', c.TikTok], ['YouTube', c.YouTube],
+    ['LinkedIn', c.LinkedIn], ['Facebook', c.Facebook]
+  ].filter(([, url]) => url);
+  document.getElementById('footerRedes').innerHTML = redes
+    .map(([name, url]) => `<li><a href="${url}" target="_blank" rel="noopener" class="hover:text-branding-sand">${name}</a></li>`)
+    .join('');
+
+  const tel = (c.Telefono || '').replace(/[^0-9]/g, '');
+  document.getElementById('footerContacto').innerHTML = `
+    <li><a href="https://www.google.com/maps/search/${encodeURIComponent(c.Direccion || '')}" target="_blank" rel="noopener" class="hover:text-branding-sand">${c.Direccion || ''}</a></li>
+    <li><a href="https://wa.me/${tel}" target="_blank" rel="noopener" class="hover:text-branding-sand">${c.Telefono || ''}</a></li>
+    <li><a href="mailto:${c.Email || ''}" class="hover:text-branding-sand">${c.Email || ''}</a></li>
+  `;
+}
+renderFooterContacts();
+
+/* =====================================================================
+   COMPONENTES: contador animado, selector de país, formulario de lead,
+   carrusel de proyectos, lightbox, acordeón de FAQs
+   ===================================================================== */
+function animateCounter(el, target) {
+  const duration = 1400;
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const value = Math.floor(progress * target);
+    el.textContent = value.toLocaleString('es-AR');
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toLocaleString('es-AR');
+  }
+  requestAnimationFrame(tick);
+}
+
+function initCounterObserver() {
+  const counters = document.querySelectorAll('[data-counter]');
+  if (!counters.length) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target, Number(entry.target.dataset.counter));
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  counters.forEach(c => obs.observe(c));
+}
+
+const COUNTRY_CODES = [
+  { code: 'AR', dial: '+54', name: 'Argentina' },
+  { code: 'UY', dial: '+598', name: 'Uruguay' },
+  { code: 'CL', dial: '+56', name: 'Chile' },
+  { code: 'PY', dial: '+595', name: 'Paraguay' },
+  { code: 'BR', dial: '+55', name: 'Brasil' },
+  { code: 'US', dial: '+1', name: 'Estados Unidos' },
+  { code: 'ES', dial: '+34', name: 'España' },
+  { code: 'MX', dial: '+52', name: 'México' }
+];
+
+function leadFormTemplate(prefill) {
+  const p = prefill || {};
+  return `
+  <form id="lead-form" onsubmit="submitLeadForm(event)" class="bg-white/95 rounded-xl p-6 md:p-8 shadow-xl max-w-md w-full">
+    <p class="text-xs font-semibold tracking-wide text-branding-blue/70 uppercase mb-1">Qué tipo de departamento buscás?</p>
+    <div class="flex flex-wrap gap-2 mb-4">
+      ${['1 ambiente','2 ambientes','3 ambientes','4 ambientes'].map(a => `
+        <label class="text-sm">
+          <input type="radio" name="ambiente" value="${a}" class="mr-1">${a}
+        </label>`).join('')}
+    </div>
+    <p class="text-xs font-semibold tracking-wide text-branding-blue/70 uppercase mb-1">Cuál es tu zona de preferencia?</p>
+    <div class="flex flex-wrap gap-2 mb-4">
+      ${['Núñez','Saavedra','Palermo','Recoleta'].map(z => `
+        <label class="text-sm">
+          <input type="radio" name="zona" value="${z}" class="mr-1">${z}
+        </label>`).join('')}
+    </div>
+    <input name="nombre" type="text" placeholder="Nombre completo" required class="w-full border rounded-md px-3 py-2 mb-3 text-sm" value="${p.nombre || ''}" />
+    <input name="email" type="email" placeholder="Email" required class="w-full border rounded-md px-3 py-2 mb-3 text-sm" />
+    <div class="flex mb-3">
+      <div class="relative">
+        <button type="button" id="countryBtn" class="flex items-center gap-1 rounded-s-md rounded-e-none border border-r-0 px-3 py-2 text-sm bg-white">
+          <span id="countryDial">+54</span> ▾
+        </button>
+        <div id="countryDropdown" class="hidden absolute z-10 top-full left-0 mt-1 w-56 bg-white border rounded-md shadow-lg p-2">
+          <input id="countrySearch" type="text" placeholder="Buscar país..." class="w-full border rounded px-2 py-1 text-sm mb-2" oninput="filterCountries(this.value)">
+          <div id="countryList" class="max-h-48 overflow-y-auto text-sm"></div>
+        </div>
+      </div>
+      <input name="telefono" type="tel" placeholder="Teléfono" required class="w-full border rounded-e-md px-3 py-2 text-sm" />
+    </div>
+    <input type="hidden" name="proyectoId" value="${p.proyectoId || ''}" />
+    <button type="submit" class="w-full bg-branding-blue text-white rounded-md py-3 font-medium hover:brightness-110 transition">Quiero más información</button>
+    <p id="leadFormMsg" class="text-sm mt-3"></p>
+  </form>`;
+}
+
+function initCountrySelector() {
+  const btn = document.getElementById('countryBtn');
+  const dropdown = document.getElementById('countryDropdown');
+  if (!btn) return;
+  renderCountryList(COUNTRY_CODES);
+  btn.addEventListener('click', () => dropdown.classList.toggle('hidden'));
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== btn) dropdown.classList.add('hidden');
+  });
+}
+function renderCountryList(list) {
+  const el = document.getElementById('countryList');
+  if (!el) return;
+  el.innerHTML = list.map(c => `
+    <button type="button" class="w-full text-left px-2 py-1 hover:bg-slate-100 rounded" onclick="selectCountry('${c.dial}')">${c.name} (${c.dial})</button>
+  `).join('');
+}
+function filterCountries(q) {
+  renderCountryList(COUNTRY_CODES.filter(c => c.name.toLowerCase().includes(q.toLowerCase())));
+}
+function selectCountry(dial) {
+  document.getElementById('countryDial').textContent = dial;
+  document.getElementById('countryDropdown').classList.add('hidden');
+}
+
+async function submitLeadForm(evt) {
+  evt.preventDefault();
+  const form = evt.target;
+  const msgEl = form.querySelector('#leadFormMsg');
+  const dial = document.getElementById('countryDial').textContent;
+  const lead = {
+    Nombre: form.nombre.value,
+    Email: form.email.value,
+    Telefono: dial + ' ' + form.telefono.value,
+    Ambiente: (form.querySelector('input[name=ambiente]:checked') || {}).value || '',
+    Zona: (form.querySelector('input[name=zona]:checked') || {}).value || '',
+    ProyectoID: form.proyectoId.value,
+    Mensaje: '',
+    Origen: location.hash || '#/'
+  };
+  msgEl.textContent = 'Enviando...';
+  msgEl.className = 'text-sm mt-3 text-slate-500';
+  const result = await apiPost('addLead', { lead });
+  if (result.ok) {
+    msgEl.textContent = '¡Gracias! En breve te contactamos.';
+    msgEl.className = 'text-sm mt-3 text-green-600';
+    form.reset();
+  } else {
+    msgEl.textContent = result.error || 'No se pudo enviar. Probá de nuevo o escribinos por WhatsApp.';
+    msgEl.className = 'text-sm mt-3 text-red-600';
+  }
+}
+
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.remove('hidden');
+  document.getElementById('lightbox').classList.add('flex');
+  document.body.classList.add('lightbox-open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.add('hidden');
+  document.getElementById('lightbox').classList.remove('flex');
+  document.body.classList.remove('lightbox-open');
+}
+
+function initCarousel(trackId, itemSelector) {
+  const track = document.getElementById(trackId);
+  if (!track) return;
+  window['scrollCarousel_' + trackId] = (dir) => {
+    const item = track.querySelector(itemSelector);
+    const width = item ? item.getBoundingClientRect().width + 24 : 320;
+    track.scrollBy({ left: dir * width, behavior: 'smooth' });
+  };
+}
+
+function toggleFaq(idx) {
+  const answer = document.getElementById('faq-answer-' + idx);
+  const icon = document.getElementById('faq-icon-' + idx);
+  answer.classList.toggle('hidden');
+  icon.textContent = answer.classList.contains('hidden') ? '+' : '–';
+}
+
+/* =====================================================================
+   PÁGINAS
+   ===================================================================== */
+function projectCard(p) {
+  return `
+    <a href="#/proyectos/${p.Slug}" class="block w-[300px] shrink-0 snap-start bg-white rounded-xl overflow-hidden border hover:shadow-lg transition">
+      <div class="relative h-44">
+        <img src="${p.ImagenURL}" alt="${p.Nombre}" class="w-full h-full object-cover" />
+        <span class="absolute top-3 left-3 bg-white/90 text-branding-blue text-xs font-semibold px-2.5 py-1 rounded">${p.Estado || 'En construcción'}</span>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-branding-blue mb-1">${p.Nombre}</h3>
+        <p class="text-sm text-slate-600 line-clamp-3">${p.DescripcionCorta || ''}</p>
+        <span class="inline-block mt-3 text-sm font-medium text-branding-blue">Ver más →</span>
+      </div>
+    </a>`;
+}
+
+async function pageHome() {
+  const [contactos, estadisticas, proyectos, blog] = await Promise.all([
+    loadOr('getContactos', null, FALLBACK_DATA.contactos),
+    loadOr('getEstadisticas', null, FALLBACK_DATA.estadisticas),
+    loadOr('getProyectos', null, FALLBACK_DATA.proyectos),
+    loadOr('getBlog', null, FALLBACK_DATA.blog)
+  ]);
+
+  const html = `
+  <section class="relative bg-branding-blue text-white">
+    <img src="img/hero-aerial-buenos-aires.jpg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-30" />
+    <div class="relative max-w-7xl mx-auto px-5 lg:px-8 py-16 lg:py-24 grid lg:grid-cols-2 gap-10 items-center">
+      <div>
+        <div class="grid grid-cols-3 gap-6 mb-10">
+          ${estadisticas.map(e => `
+            <div>
+              <div class="text-3xl md:text-4xl font-bold text-branding-sand" data-counter="${e.Valor}">0</div>
+              <div class="text-xs md:text-sm text-white/70 mt-1 uppercase tracking-wide">${e.Label}</div>
+            </div>`).join('')}
+        </div>
+        <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">Invertí en <span class="text-branding-sand">real estate</span> con <span class="text-branding-sand">confianza</span></h1>
+        <p class="text-white/80 mb-6 max-w-md">Desarrollos inmobiliarios en pozo en las mejores zonas de Buenos Aires. Entrega en tiempo y forma, con los más altos estándares de calidad.</p>
+        <button onclick="document.getElementById('proyectos-grid').scrollIntoView({behavior:'smooth'})" class="bg-branding-sand text-branding-blue font-medium px-6 py-3 rounded-md hover:brightness-95 transition">Ver Últimas Unidades</button>
+      </div>
+      <div class="flex justify-center lg:justify-end">${leadFormTemplate()}</div>
+    </div>
+  </section>
+
+  <section id="proyectos" class="max-w-7xl mx-auto px-5 lg:px-8 py-16">
+    <h2 class="text-xs font-semibold tracking-widest text-branding-sand uppercase mb-2">Nuestros proyectos</h2>
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-2xl md:text-3xl font-bold text-branding-blue">Desarrollos que definen el futuro de Buenos Aires</h3>
+      <div class="hidden md:flex gap-2">
+        <button onclick="scrollCarousel_proyectos-grid(-1)" class="h-10 w-10 rounded-full border flex items-center justify-center hover:bg-branding-blue hover:text-white transition">‹</button>
+        <button onclick="scrollCarousel_proyectos-grid(1)" class="h-10 w-10 rounded-full border flex items-center justify-center hover:bg-branding-blue hover:text-white transition">›</button>
+      </div>
+    </div>
+    <div id="proyectos-grid" class="flex gap-6 overflow-x-auto snap-x pb-4 scroll-smooth">
+      ${proyectos.map(projectCard).join('')}
+    </div>
+  </section>
+
+  <section class="bg-slate-50 py-16 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-5 lg:px-8 mb-8">
+      <h3 class="text-2xl md:text-3xl font-bold text-branding-blue">Cada detalle importa</h3>
+    </div>
+    <div class="flex gap-16 marquee-track whitespace-nowrap px-5">
+      ${[...FALLBACK_DATA.amenitiesGlobal, ...FALLBACK_DATA.amenitiesGlobal].map(a => `
+        <span class="text-lg font-medium text-branding-blue/70 inline-flex items-center gap-2">✦ ${a.Nombre}</span>`).join('')}
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-xs font-semibold tracking-widest text-branding-sand uppercase mb-2">Novedades</p>
+    <h3 class="text-2xl md:text-3xl font-bold text-branding-blue mb-8">Informate con Nosotros</h3>
+    <div class="grid md:grid-cols-3 gap-6">
+      ${blog.slice(0, 3).map(b => `
+        <a href="#/blog/${b.Slug}" class="block bg-white rounded-xl overflow-hidden border hover:shadow-lg transition">
+          <img src="${b.ImagenURL}" alt="${b.Titulo}" class="h-40 w-full object-cover" />
+          <div class="p-5">
+            <span class="text-xs font-semibold text-branding-sand uppercase">${b.Categoria}</span>
+            <p class="text-xs text-slate-400 mb-2">${formatDate(b.Fecha)}</p>
+            <h4 class="font-semibold text-branding-blue mb-2">${b.Titulo}</h4>
+            <p class="text-sm text-slate-600 line-clamp-2">${b.Resumen}</p>
+          </div>
+        </a>`).join('')}
+    </div>
+    <div class="text-center mt-8">
+      <a href="#/blog" class="text-branding-blue font-medium hover:underline">Ver todas las novedades →</a>
+    </div>
+  </section>`;
+
+  document.getElementById('app').innerHTML = html;
+  initCounterObserver();
+  initCountrySelector();
+  initCarousel('proyectos-grid', 'a');
+}
+
+async function pageNosotros() {
+  const equipo = await loadOr('getEquipo', null, FALLBACK_DATA.equipo);
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-5xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; Nosotros</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-10">El equipo detrás de cada proyecto</h1>
+    <div class="grid md:grid-cols-2 gap-8 mb-16">
+      ${equipo.map(m => `
+        <div class="border rounded-xl p-6">
+          <h3 class="text-xl font-bold text-branding-blue mb-1">${m.Nombre}</h3>
+          <p class="text-sm text-branding-sand font-medium mb-3">${m.Cargo}</p>
+          <p class="text-sm text-slate-600 whitespace-pre-line">${m.Bio}</p>
+        </div>`).join('')}
+    </div>
+    <div class="grid md:grid-cols-2 gap-8 mb-16">
+      <div class="bg-slate-50 rounded-xl p-6">
+        <h3 class="font-bold text-branding-blue mb-2">Misión</h3>
+        <p class="text-sm text-slate-600">Desarrollar edificios de excelentísima calidad, pensados para perdurar, con un nivel de diseño, ejecución y detalle que supere el estándar del mercado y cuide el valor de quienes confían en nosotros.</p>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-6">
+        <h3 class="font-bold text-branding-blue mb-2">Visión</h3>
+        <p class="text-sm text-slate-600">Contribuir al cambio cultural y arquitectónico del país, elevando el estándar de la construcción y aportando valor a través de edificaciones que reflejen la identidad y el potencial de la Argentina.</p>
+      </div>
+    </div>
+    <h3 class="text-2xl font-bold text-branding-blue mb-6">Lo que hace un desarrollador</h3>
+    <div class="grid md:grid-cols-3 gap-6">
+      ${[
+        ['01','Análisis y adquisición','Identificamos ubicaciones estratégicas con alto potencial de valorización.'],
+        ['02','Diseño arquitectónico','Nuestro equipo crea espacios que combinan funcionalidad, estética y eficiencia energética.'],
+        ['03','Aprobaciones y permisos','Gestionamos todos los trámites municipales y legales.'],
+        ['04','Construcción','Supervisión constante, materiales premium y cumplimiento estricto de plazos.'],
+        ['05','Comercialización','Estrategias de venta transparentes con financiación flexible.'],
+        ['06','Entrega','Inspección final, documentación completa y entrega de llaves.']
+      ].map(([n,t,d]) => `
+        <div>
+          <span class="text-3xl font-bold text-branding-sand">${n}</span>
+          <h4 class="font-semibold text-branding-blue mt-2 mb-1">${t}</h4>
+          <p class="text-sm text-slate-600">${d}</p>
+        </div>`).join('')}
+    </div>
+  </section>`;
+}
+
+async function pageProyectos() {
+  const proyectos = await loadOr('getProyectos', null, FALLBACK_DATA.proyectos);
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-7xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; Proyectos</p>
+    <h2 class="text-xs font-semibold tracking-widest text-branding-sand uppercase mb-2">Nuestros proyectos</h2>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-10">Desarrollos que definen el futuro de Buenos Aires</h1>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      ${proyectos.map(p => projectCard(p)).join('').replaceAll('w-[300px] shrink-0 snap-start', 'w-full')}
+    </div>
+  </section>`;
+}
+
+async function pageProyectoDetalle(slug) {
+  let proyecto = await apiGet('getProyecto', { slug });
+  if (!proyecto) proyecto = FALLBACK_DATA.proyectos.find(p => p.Slug === slug);
+  if (!proyecto) { document.getElementById('app').innerHTML = notFoundHtml('proyecto'); return; }
+
+  const amenities = proyecto.amenities && proyecto.amenities.length
+    ? proyecto.amenities.map(a => a.Nombre)
+    : (FALLBACK_DATA.amenitiesPorProyecto[slug] || ['Espacios comunes', 'Terrazas', 'Parrilla', 'Jardín', 'Pileta']);
+
+  const galeria = (proyecto.GaleriaURLs || proyecto.ImagenURL || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-5xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2">
+      <a href="#/" class="hover:underline">Inicio</a> &gt; <a href="#/proyectos" class="hover:underline">Proyectos</a> &gt; ${proyecto.Nombre}
+    </p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-6">${proyecto.Nombre}</h1>
+
+    <div class="grid md:grid-cols-3 gap-3 mb-10">
+      ${galeria.map((src, i) => `
+        <button onclick="openLightbox('${src}')" class="${i===0 ? 'md:col-span-2 md:row-span-2 h-64 md:h-full' : 'h-40'} rounded-lg overflow-hidden">
+          <img src="${src}" alt="${proyecto.Nombre}" class="w-full h-full object-cover hover:scale-105 transition" />
+        </button>`).join('')}
+    </div>
+
+    <p class="text-slate-700 mb-4">${proyecto.DescripcionCorta || ''}</p>
+    <p class="text-slate-600 mb-10">${proyecto.DescripcionLarga || ''}</p>
+
+    ${proyecto.PDFPlanosUrl ? `<a href="${proyecto.PDFPlanosUrl}" target="_blank" class="inline-block mb-10 bg-branding-blue text-white px-5 py-3 rounded-md font-medium hover:brightness-110">Descargar planos de venta</a>` : ''}
+
+    <h3 class="text-xl font-bold text-branding-blue mb-4">Amenities</h3>
+    <div class="flex flex-wrap gap-3 mb-10">
+      ${amenities.map(a => `<span class="bg-slate-100 text-slate-700 text-sm px-4 py-2 rounded-full">${a}</span>`).join('')}
+    </div>
+
+    <h3 class="text-xl font-bold text-branding-blue mb-4">Ubicación</h3>
+    <p class="text-slate-600 mb-4">${proyecto.Direccion || ''}, ${proyecto.Barrio || ''}</p>
+    <div class="rounded-lg overflow-hidden border h-72 mb-10">
+      <iframe class="w-full h-full" loading="lazy" src="https://www.google.com/maps?q=${encodeURIComponent((proyecto.Direccion||'') + ' ' + (proyecto.Barrio||'') + ' CABA')}&output=embed"></iframe>
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-6 md:p-8">
+      <h3 class="text-xl font-bold text-branding-blue mb-4">Consultanos por este proyecto</h3>
+      ${leadFormTemplate({ proyectoId: proyecto.ID })}
+    </div>
+  </section>`;
+  initCountrySelector();
+}
+
+async function pageBlog() {
+  const posts = await loadOr('getBlog', null, FALLBACK_DATA.blog);
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-7xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; Blog</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-2">Novedades</h1>
+    <p class="text-slate-600 mb-10">Artículos recientes sobre nuestros proyectos, tendencias y novedades del sector.</p>
+    <div class="grid md:grid-cols-3 gap-6">
+      ${posts.map(b => `
+        <a href="#/blog/${b.Slug}" class="block bg-white rounded-xl overflow-hidden border hover:shadow-lg transition">
+          <img src="${b.ImagenURL}" alt="${b.Titulo}" class="h-40 w-full object-cover" />
+          <div class="p-5">
+            <span class="text-xs font-semibold text-branding-sand uppercase">${b.Categoria}</span>
+            <p class="text-xs text-slate-400 mb-2">${formatDate(b.Fecha)}</p>
+            <h4 class="font-semibold text-branding-blue mb-2">${b.Titulo}</h4>
+            <p class="text-sm text-slate-600 line-clamp-2">${b.Resumen}</p>
+          </div>
+        </a>`).join('')}
+    </div>
+  </section>`;
+}
+
+async function pageBlogDetalle(slug) {
+  let post = await apiGet('getBlogPost', { slug });
+  if (!post) post = FALLBACK_DATA.blog.find(b => b.Slug === slug);
+  if (!post) { document.getElementById('app').innerHTML = notFoundHtml('artículo'); return; }
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-3xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; <a href="#/blog" class="hover:underline">Blog</a> &gt; ${post.Titulo}</p>
+    <span class="text-xs font-semibold text-branding-sand uppercase">${post.Categoria}</span>
+    <p class="text-xs text-slate-400 mb-4">${formatDate(post.Fecha)}</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-6">${post.Titulo}</h1>
+    <img src="${post.ImagenURL}" alt="${post.Titulo}" class="w-full rounded-xl mb-8" />
+    <div class="prose max-w-none text-slate-700">${post.ContenidoHTML || `<p>${post.Resumen}</p>`}</div>
+  </section>`;
+}
+
+async function pageFaqs() {
+  const faqs = await loadOr('getFaqs', null, FALLBACK_DATA.faqs);
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-3xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; Preguntas Frecuentes</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-2">Preguntas frecuentes</h1>
+    <p class="text-slate-600 mb-6">Respondemos todas tus dudas sobre invertir en pozo</p>
+    <input type="text" id="faqSearch" placeholder="Buscar en las preguntas..." oninput="filterFaqs(this.value)" class="w-full border rounded-md px-4 py-3 mb-8 text-sm" />
+    <div id="faqList" class="divide-y border rounded-xl overflow-hidden"></div>
+  </section>`;
+  window._faqs = faqs;
+  renderFaqList(faqs);
+}
+function renderFaqList(faqs) {
+  document.getElementById('faqList').innerHTML = faqs.map((f, i) => `
+    <div>
+      <button onclick="toggleFaq(${i})" class="w-full flex justify-between items-center text-left px-5 py-4 hover:bg-slate-50">
+        <span class="font-medium text-branding-blue pr-4">${f.Pregunta}</span>
+        <span id="faq-icon-${i}" class="text-xl text-branding-sand shrink-0">+</span>
+      </button>
+      <div id="faq-answer-${i}" class="hidden px-5 pb-4 text-sm text-slate-600">${f.Respuesta}</div>
+    </div>`).join('');
+}
+function filterFaqs(q) {
+  const filtered = (window._faqs || []).filter(f => f.Pregunta.toLowerCase().includes(q.toLowerCase()));
+  renderFaqList(filtered);
+}
+
+async function pageEventos() {
+  const eventos = await loadOr('getEventos', null, FALLBACK_DATA.eventos);
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-7xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; Eventos</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-2">Eventos en los que participamos</h1>
+    <p class="text-slate-600 mb-10 max-w-2xl">Grupo Briones participa activamente en conferencias, universidades, eventos corporativos y encuentros de negocios.</p>
+    <div class="grid md:grid-cols-3 gap-6">
+      ${eventos.map(e => `
+        <div class="border rounded-xl p-6">
+          ${e.ImagenURL ? `<img src="${e.ImagenURL}" class="rounded-lg mb-4 h-32 w-full object-cover" />` : ''}
+          <h3 class="font-semibold text-branding-blue mb-2">${e.Titulo}</h3>
+          <p class="text-sm text-slate-600">${e.Descripcion}</p>
+        </div>`).join('')}
+    </div>
+  </section>`;
+}
+
+async function pagePrensa() {
+  const prensa = await loadOr('getPrensa', null, FALLBACK_DATA.prensa);
+  document.getElementById('app').innerHTML = `
+  <section class="max-w-5xl mx-auto px-5 lg:px-8 py-16">
+    <p class="text-sm text-slate-400 mb-2"><a href="#/" class="hover:underline">Inicio</a> &gt; Prensa</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-branding-blue mb-10">Prensa y medios</h1>
+    <div class="divide-y border rounded-xl overflow-hidden">
+      ${prensa.map(p => `
+        <a href="${p.URL}" target="_blank" rel="noopener" class="flex items-center justify-between px-5 py-4 hover:bg-slate-50">
+          <div>
+            <span class="text-xs font-semibold text-branding-sand uppercase">${p.Medio}</span>
+            <p class="font-medium text-branding-blue">${p.Titulo}</p>
+          </div>
+          <span class="text-branding-blue">→</span>
+        </a>`).join('')}
+    </div>
+  </section>`;
+}
+
+function notFoundHtml(tipo) {
+  return `<section class="max-w-3xl mx-auto px-5 py-24 text-center">
+    <h1 class="text-2xl font-bold text-branding-blue mb-3">No encontramos ese ${tipo}</h1>
+    <a href="#/" class="text-branding-blue underline">Volver al inicio</a>
+  </section>`;
+}
+
+function formatDate(iso) {
+  try {
+    // Evita el corrimiento de un día que causa parsear "YYYY-MM-DD" como UTC
+    // cuando la zona horaria local está detrás de UTC (ej. Argentina).
+    const datePart = String(iso).slice(0, 10);
+    const [y, m, d] = datePart.split('-').map(Number);
+    const date = (y && m && d) ? new Date(y, m - 1, d) : new Date(iso);
+    return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) { return iso; }
+}
+
+/* =====================================================================
+   ROUTER
+   ===================================================================== */
+async function router() {
+  const hash = location.hash || '#/';
+  const parts = hash.replace(/^#\//, '').split('/').filter(Boolean);
+  window.scrollTo(0, 0);
+  document.getElementById('app').classList.remove('fade-in');
+  void document.getElementById('app').offsetWidth;
+  document.getElementById('app').classList.add('fade-in');
+
+  if (parts.length === 0) return pageHome();
+  if (parts[0] === 'nosotros') return pageNosotros();
+  if (parts[0] === 'proyectos' && parts[1]) return pageProyectoDetalle(parts[1]);
+  if (parts[0] === 'proyectos') return pageProyectos();
+  if (parts[0] === 'blog' && parts[1]) return pageBlogDetalle(parts[1]);
+  if (parts[0] === 'blog') return pageBlog();
+  if (parts[0] === 'faqs') return pageFaqs();
+  if (parts[0] === 'eventos') return pageEventos();
+  if (parts[0] === 'prensa') return pagePrensa();
+  document.getElementById('app').innerHTML = notFoundHtml('página');
+}
+
+window.addEventListener('hashchange', router);
+window.addEventListener('DOMContentLoaded', router);
+</script>
+</body>
+</html>
